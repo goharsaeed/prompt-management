@@ -1,0 +1,55 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql" // Database provider (use "postgresql" for Supabase)
+  url      = env("DATABASE_URL") // The URL is stored in the .env file
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  role            String
+  assignedPrompts AssignedPrompt[]  // Existing relation for assigned prompts
+  prompts         Prompt[] // New inverse relation to Prompt model
+    submissions     Submission[]     // 👈 Make this optional
+}
+
+model Prompt {
+  id              String           @id @default(cuid())
+  title           String
+  content         String
+  createdBy       String
+  user            User             @relation(fields: [createdBy], references: [id]) // Relation field to User
+  assignedPrompts AssignedPrompt[] // Existing relation to AssignedPrompt model
+    submissions     Submission[]    // 👈 Make this optional
+}
+
+model AssignedPrompt {
+  id       String   @id @default(cuid())
+  deadline DateTime
+  userId   String
+  promptId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  prompt Prompt @relation(fields: [promptId], references: [id])
+}
+
+model Submission {
+  id          String   @id @default(cuid())
+  userId      String
+  promptId    String
+  status      String
+  fileUrl     String
+  submittedAt DateTime
+
+ 
+   user        User?   @relation(fields: [userId], references: [id]) // 👈 Optional relation
+  prompt      Prompt? @relation(fields: [promptId], references: [id]) // 👈 Optional relation
+}
+
